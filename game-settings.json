@@ -1,0 +1,9 @@
+{
+  "id": "tap-boxing",
+  "title": "Tap Boxing",
+  "description": "ジャブ・ストレート・アッパーで殴って何人倒せるか競うタップ・ボクシング",
+  "url": "https://tap-boxing.vercel.app/",
+  "type": "score",
+  "embed": "iframe",
+  "reportsProgress": false
+}

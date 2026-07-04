@@ -3,111 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<style>
-  html, body { margin: 0; height: 100dvh; overflow: hidden;
-    touch-action: none; overscroll-behavior: contain; user-select: none;
-    font-family: system-ui, sans-serif; background: #0f1b2d; color: #fff; }
-  #app  { display: flex; flex-direction: column; height: 100dvh; }
-  #hud  { padding: 12px 16px; display: flex; justify-content: space-between;
-    font-variant-numeric: tabular-nums; font-weight: 700; }
-  #zone { flex: 1; position: relative; }
-  .msg  { position: absolute; inset: 0; display: grid; place-items: center;
-    font-size: 26px; opacity: .6; pointer-events: none; }
-  .circle { position: absolute; border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #ffd97a, #f5ad16);
-    box-shadow: 0 4px 18px rgba(245,173,22,.45);
-    animation: pop .15s ease-out; }
-  @keyframes pop { from { transform: scale(.4); opacity: .4; } to { transform: scale(1); opacity: 1; } }
-</style>
+<title>Tap Boxing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Archivo:wght@500;700;900&family=Chivo+Mono:wght@700;900&display=swap" rel="stylesheet">
 </head>
 <body>
-<div id="app">
-  <div id="hud"><span>スコア <span id="score">0</span></span><span>残り <span id="time">--</span>s</span></div>
-  <div id="zone"><div class="msg" id="msg">準備中…</div></div>
-</div>
-<script>
-// --- PGP SDK ---
-const PGP = (() => {
-  const h = {};
-  addEventListener("message", (e) => { const m = e.data; if (m && m.channel === "pgp") h[m.type]?.(m); });
-  const send = (m) => parent.postMessage({ channel: "pgp", ...m }, "*");
-  return { onInit:c=>h.init=c, onStart:c=>h.start=c, onStop:c=>h.stop=c,
-    ready:()=>send({type:"ready"}), score:v=>send({type:"score",value:v}), gameover:r=>send({type:"gameover",...r}) };
-})();
-
-// seed 付き乱数: 円の大きさ・位置・寿命の並びが全プレイヤーで同一になる（公平性）
-function mulberry32(a) {
-  return function () {
-    a |= 0; a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-// --- ゲーム状態 ---
-let rng = Math.random, running = false, score = 0, remain = 0;
-let timer = null, lifeTimer = null, sent = false;
-const $score = document.getElementById("score");
-const $time  = document.getElementById("time");
-const $zone  = document.getElementById("zone");
-
-PGP.onInit((m) => { remain = m.durationSec; $time.textContent = remain; rng = mulberry32(m.seed); });
-
-PGP.onStart(() => {
-  running = true;
-  document.getElementById("msg")?.remove();
-  timer = setInterval(() => {
-    if (--remain <= 0) { clearInterval(timer); finish(); }
-    $time.textContent = Math.max(remain, 0);
-  }, 1000);
-  spawnCircle();
-});
-
-PGP.onStop(() => finish());   // 時間切れ / GM 終了
-
-function clearCircle() {
-  if (lifeTimer) { clearTimeout(lifeTimer); lifeTimer = null; }
-  $zone.querySelector(".circle")?.remove();
-}
-
-// ランダムな大きさ・位置で円を 1 つ表示。タップでカウント、2〜5 秒で消えて次の円へ
-function spawnCircle() {
-  if (!running) return;
-  clearCircle();
-  const zw = $zone.clientWidth, zh = $zone.clientHeight;
-  const r = 26 + rng() * 44;                       // 半径 26〜70px
-  const x = r + rng() * Math.max(1, zw - r * 2);   // 中心座標（zone 内に収める）
-  const y = r + rng() * Math.max(1, zh - r * 2);
-  const lifeMs = 2000 + rng() * 3000;              // 2〜5 秒で消える
-  const el = document.createElement("div");
-  el.className = "circle";
-  el.style.cssText = "left:" + (x - r) + "px;top:" + (y - r) + "px;width:" + r * 2 + "px;height:" + r * 2 + "px";
-  el.addEventListener("pointerdown", () => {
-    if (!running) return;
-    score++; $score.textContent = score;
-    PGP.score(score);          // 現在の合計スコアを送信（任意）
-    spawnCircle();             // タップ成功 → 即次の円
-  });
-  $zone.appendChild(el);
-  lifeTimer = setTimeout(spawnCircle, lifeMs);     // タップされずに寿命 → 消えて次の円
-}
-
-function finish() {
-  if (sent) return;            // 二重送信防止
-  sent = true; running = false;
-  clearInterval(timer); clearCircle();
-  const done = document.createElement("div");
-  done.className = "msg";
-  done.style.opacity = "1";
-  done.textContent = "終了！ " + score + " 点";
-  $zone.appendChild(done);
-  PGP.gameover({ finalScore: score });   // score 制の結果
-}
-
-addEventListener("error", () => finish());   // 例外時でも最小結果を送る
-
-PGP.ready();   // ← ロード完了。握手の起点
-</script>
+<div id="root"></div>
+<script type="module" src="./src/main.jsx"></script>
 </body>
 </html>
