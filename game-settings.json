@@ -1,9 +1,10 @@
 {
   "id": "tap-boxing",
   "title": "Tap Boxing",
-  "description": "ジャブ・ストレート・アッパーで殴って何人倒せるか競うタップ・ボクシング",
-  "url": "https://tap-boxing.vercel.app/",
+  "description": "サンプルゲーム.。殴って何人倒せるか競うタップ・ボクシング",
+  "url": "https://ytt-game-s1.vercel.app/",
   "type": "score",
   "embed": "iframe",
+  "developer": "ヤマダタロウ",
   "reportsProgress": false
 }
